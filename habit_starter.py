@@ -65,7 +65,12 @@ def habit_starter(chrome_driver_load, folder_root):
     
 
 if __name__ == "__main__":
-    folder_root = r"/Users/armjorge/Library/CloudStorage/GoogleDrive-armjorge@gmail.com/My Drive/Projects/habit_starter"
+    if sys.platform == "darwin":
+        folder_root = r"/Users/armjorge/Library/CloudStorage/GoogleDrive-armjorge@gmail.com/My Drive/Projects/habit_starter"
+    elif sys.platform.startswith("win"):
+        folder_root = r"C:\Users\arman\Documents\habit_starter"
+    else:
+        raise RuntimeError(f"Unsupported platform: {sys.platform}")
     # 1) Añade al path la carpeta donde está df_multi_match.py
     libs_dir = os.path.join(folder_root, "Library")
     sys.path.insert(0, libs_dir)
