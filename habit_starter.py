@@ -15,54 +15,46 @@ def message_print(message):
     message = f'\n{message_highlights}\n{message}\n{message_highlights}\n'
     return message
 
-def habit_starter(chrome_driver_load, folder_root): 
+
+def habit_starter(chrome_driver_load, folder_root, ACTIONS): 
     download_folder= os.path.join(folder_root, "Downloads")
-
     driver = chrome_driver_load(download_folder)
-    message_simplicity = "Primer objetivo: cargar mi perfil en simplicity"
-    print(message_print(message_simplicity))
-    driver.get("https://tec-csm.symplicity.com/")
-    exatec_xpath = '//*[@id="wherechoices"]/a[1]/span'
-    try:
-        # 1) Espera y click en Exatec
-        elemento = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, exatec_xpath))
-        )
-        elemento.click()
-        print("✓ Hice click en Exatec")
+    timeout = 10
 
-        # 2) Espera al campo de usuario y envía el ID
-        user_xpath = '//*[@id="Ecom_User_ID"]'
-        user_input = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located((By.XPATH, user_xpath))
-        )
-        user_input.clear()
-        user_input.send_keys('A01793646')
-        print("✓ Usuario ingresado")
+    for url, steps in ACTIONS.items():
+        print(f"\n🔗 Navegando a {message_print(url)}")
+        driver.get(url)
 
-        # 3) Espera al campo de contraseña y envía la clave
-        password_xpath = '//*[@id="Ecom_Password"]'
-        pass_input = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located((By.XPATH, password_xpath))
-        )
-        pass_input.clear()
-        pass_input.send_keys('Endeavor1$')
-        print("✓ Contraseña ingresada")
+        try:
+            for idx, step in enumerate(steps, start=1):
+                by   = step["by"]
+                loc  = step["locator"]
+                typ  = step["type"]
+                print(f"  → Paso {idx}: {typ} en {loc}")
 
-        # 4) Espera y click en el botón de entrar
-        enter_xpath = '//*[@id="submitButton"]'
-        submit_btn = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, enter_xpath))
-        )
-        submit_btn.click()
-        print("✓ Click en Entrar realizado")
-        
-    except TimeoutException as e:
-        print(f"✗ No se encontró alguno de los elementos en tiempo: {e}")
-        
-    input("Presiona Enter para cerrar el navegador...")
+                # use element_to_be_clickable for both click and send_keys
+                elem = WebDriverWait(driver, timeout).until(
+                    EC.element_to_be_clickable((by, loc))
+                )
+
+                if typ == "click":
+                    elem.click()
+                    print(f"    ✓ Clicked {loc}")
+
+                elif typ == "send_keys":
+                    # click once to focus, then clear and send
+                    elem.click()
+                    elem.clear()
+                    elem.send_keys(step["value"])
+                    print(f"    ✓ Sent keys (‘{step['value']}’) to {loc}")
+
+                else:
+                    raise ValueError(f"Tipo desconocido: {typ}")
+
+        except TimeoutException as e:
+            print(f"    ✗ Timeout en paso {idx} ({typ} @ {loc}): {e}")           
+    input(message_print("Presina enter para cerrar el navegador"))
     driver.quit()
-    
 
 if __name__ == "__main__":
     if sys.platform == "darwin":
@@ -77,7 +69,13 @@ if __name__ == "__main__":
 
     # 2) Ahora importa la función directamente
     from chrome_driver_load import load_chrome
-
+    ACTIONS = {
+    "https://tec-csm.symplicity.com/": [
+        {"type": "click",     "by": By.XPATH, "locator": '//*[@id="wherechoices"]/a[1]/span'},
+        {"type": "send_keys", "by": By.XPATH, "locator": '//*[@id="Ecom_User_ID"]',    "value": "A01793646"},
+        {"type": "send_keys", "by": By.XPATH, "locator": '//*[@id="Ecom_Password"]',     "value": "Endeavor1$"},
+        {"type": "click",     "by": By.XPATH, "locator": '//*[@id="submitButton"]'},
+    ],}
     # 3) Llama a tu función pasándola como parámetro
-    habit_starter(load_chrome, folder_root)
+    habit_starter(load_chrome, folder_root, ACTIONS)
     
