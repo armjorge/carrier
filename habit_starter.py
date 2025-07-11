@@ -50,10 +50,14 @@ def habit_starter(chrome_driver_load, folder_root, ACTIONS):
 
                 else:
                     raise ValueError(f"Tipo desconocido: {typ}")
-
         except TimeoutException as e:
-            print(f"    ✗ Timeout en paso {idx} ({typ} @ {loc}): {e}")           
-    input(message_print("Presina enter para cerrar el navegador"))
+            print(f"    ✗ Timeout en paso {idx} ({typ} @ {loc}): {e}")
+
+        # ← aquí: bloquea hasta que pulses Enter
+        input(message_print("Presiona Enter cuando estés listo para ir a la siguiente página"))
+
+    # una vez terminados todos los URLs:
+    input(message_print("Presiona Enter para cerrar el navegador"))
     driver.quit()
 
 if __name__ == "__main__":
@@ -70,12 +74,15 @@ if __name__ == "__main__":
     # 2) Ahora importa la función directamente
     from chrome_driver_load import load_chrome
     ACTIONS = {
+    "https://mx.indeed.com/": [
+        {"type": "click",     "by": By.XPATH, "locator": '//*[@id="gnav-main-container"]/div/div/div[2]/div[2]/div[2]/a'}],
     "https://tec-csm.symplicity.com/": [
         {"type": "click",     "by": By.XPATH, "locator": '//*[@id="wherechoices"]/a[1]/span'},
         {"type": "send_keys", "by": By.XPATH, "locator": '//*[@id="Ecom_User_ID"]',    "value": "A01793646"},
         {"type": "send_keys", "by": By.XPATH, "locator": '//*[@id="Ecom_Password"]',     "value": "Endeavor1$"},
-        {"type": "click",     "by": By.XPATH, "locator": '//*[@id="submitButton"]'},
-    ],}
+        {"type": "click",     "by": By.XPATH, "locator": '//*[@id="submitButton"]'}]
+     
+    }
     # 3) Llama a tu función pasándola como parámetro
     habit_starter(load_chrome, folder_root, ACTIONS)
     

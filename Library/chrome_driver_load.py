@@ -35,6 +35,11 @@ def load_chrome(directory):
         "plugins.always_open_pdf_externally": True
     }
     chrome_options.add_experimental_option("prefs", prefs)
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])
+    # (Optional) Further reduce noise:
+    chrome_options.add_argument("--disable-background-networking")
+    chrome_options.add_argument("--disable-client-side-phishing-detection")
+    chrome_options.add_argument("--disable-component-update")
 
     chrome_options.add_argument("--disable-extensions")
     chrome_options.add_argument("--disable-popup-blocking")
