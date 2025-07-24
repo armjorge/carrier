@@ -10,6 +10,29 @@ from selenium.common.exceptions import TimeoutException
 from datetime import datetime
 import yaml
 
+def add_to_gitignore(root_directory, path_to_add):
+    gitignore_path = os.path.join(root_directory, ".gitignore")
+    
+    # La ruta que queremos ignorar, relativa al root
+    
+    #relative_output = "Output/"
+    #relative_output = f"{os.path.basename(path_to_add)}\\"
+    relative_output = f"{os.path.basename(path_to_add)}/"
+    #print(relative_output)
+
+    # Verifica si ya está en .gitignore, si no, lo agrega
+    if os.path.exists(gitignore_path):
+        with open(gitignore_path, 'r') as f:
+            lines = f.read().splitlines()
+    else:
+        lines = []
+
+    if relative_output not in lines:
+        with open(gitignore_path, 'a') as f:
+            f.write(f"\n{relative_output}\n")
+        print(f"'{relative_output}' agregado a .gitignore.")
+    else:
+        print(f"'{relative_output}' ya está listado en .gitignore.")
 
 def message_print(message): 
     message_highlights= '*' * len(message)
@@ -87,11 +110,31 @@ def site_operation(ACTIONS, driver, timeout):
             print(f"    ✗ Timeout en paso {idx} ({typ} @ {loc}): {e}")           
     input(message_print("Presina enter para cerrar el navegador"))
     driver.quit()    
+def create_directory_if_not_exists(path_or_paths):
+    """Creates a directory if it does not exist and prints in Jupyter."""
+    message_create_directory_if_not_exists = 'Confirmando que los folders necesarios existen'
+    print(message_print(message_create_directory_if_not_exists))
+    if isinstance(path_or_paths, str):
+        paths = [path_or_paths]
+    elif isinstance(path_or_paths, list):
+        paths = path_or_paths
+    else:
+        raise TypeError("El argumento debe ser un string o una lista de strings.")
+
+    for path in paths:
+        if not os.path.exists(path):
+            print(f"\n\tNo se localizó el folder {os.path.basename(path)}, creando.", flush=True)
+            os.makedirs(path)
+            print(f"\tFolder {os.path.basename(path)} creado.", flush=True)
+        else:
+            print(f"\tFolder {os.path.basename(path)} encontrado.", flush=True)
 
 
 
 def habit_starter(chrome_driver_load, folder_root): 
-    download_folder= os.path.join(folder_root, "Downloads")
+    download_folder= os.path.join(folder_root, "Implementación")
+    add_to_gitignore(folder_root, download_folder)
+    not os.path.exists(download_folder) and create_directory_if_not_exists(download_folder)
     data_access = yaml_creation(download_folder) 
     driver = chrome_driver_load(download_folder)
     message_simplicity = "Primer objetivo: cargar mi perfil en simplicity"
