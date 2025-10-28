@@ -35,10 +35,22 @@ class CARRIER_MANAGEMENT:
                 for p in doc.paragraphs:
                     for key in ["JOB", "TRIPLETEN", "MBA", "DIPLOMADO", "RETAIL", "ESEOTRES", "STATUS"]:
                         if f"{{{key}}}" in p.text:
-                            inline = p.runs
-                            for i in range(len(inline)):
-                                if f"{{{key}}}" in inline[i].text:
-                                    inline[i].text = inline[i].text.replace(f"{{{key}}}", str(row.get(key, "")))
+                            for run in p.runs:
+                                if f"{{{key}}}" in run.text:
+                                    value = str(row.get(key, "")).replace('\\n', '\n')
+                                    parts = value.split('\n')
+                                    run.text = run.text.replace(f"{{{key}}}", parts[0])
+                                    if len(parts) > 1:
+                                        p_element = p._element
+                                        body_element = doc._body._element
+                                        index = list(body_element).index(p_element)
+                                        for part in parts[1:]:
+                                            new_p = doc.add_paragraph(part, style=p.style.name)
+                                            new_p_element = new_p._element
+                                            body_element.remove(new_p_element)
+                                            body_element.insert(index + 1, new_p_element)
+                                            index += 1
+                                    break
                 output_file = os.path.join(self.output_path, f"Cuaxospa_{job}.docx")
                 doc.save(output_file)
                 print(f"{Fore.GREEN}✅ Curriculum generado: {output_file}{Style.RESET_ALL}")
