@@ -2,15 +2,13 @@ import os
 from dotenv import load_dotenv
 from colorama import Fore, Style, init
 from Library.yaml_creator import YAMLCREATOR
-from Library.zoho_inventory import ZOHO_INVENTORY
-from pprint import pprint
-from Library.shopify_management import SHOPIFY_MANAGEMENT
+from Library.chrome_helper import CHROME_HELPER
 
 class CARRIER_MANAGEMENT:
     # Orchstrate the main flow
     def run(self):
         init(autoreset=True)
-        print(f"{Fore.RED}Shopify-Zoho Integration{Style.RESET_ALL}")
+        print(f"{Fore.BLUE}CARRIER MANAGEMENT{Style.RESET_ALL}")
 
     # Initialize the main components
     def __init__(self):
@@ -19,8 +17,7 @@ class CARRIER_MANAGEMENT:
         os.makedirs(self.working_folder, exist_ok=True)
         self.data_yaml = YAMLCREATOR(self.working_folder).data
         # Initialize Sprint 1.1: Get product list
-        self.zoho_inventory = ZOHO_INVENTORY(self.working_folder, self.data_yaml)
-        
+        self.chrome_helper = CHROME_HELPER()
 
     def get_root_path(self):
         # Get the directory where main.py lives (repo folder)
