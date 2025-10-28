@@ -3,12 +3,48 @@ from dotenv import load_dotenv
 from colorama import Fore, Style, init
 from Library.yaml_creator import YAMLCREATOR
 from Library.chrome_helper import CHROME_HELPER
+import pandas as pd
+from docx import Document
 
 class CARRIER_MANAGEMENT:
     # Orchstrate the main flow
     def run(self):
         init(autoreset=True)
         print(f"{Fore.BLUE}CARRIER MANAGEMENT{Style.RESET_ALL}")
+        self.templates_path = os.path.join(self.working_folder, "CV Templates")
+        os.makedirs(self.templates_path, exist_ok=True)
+        # Intialize curriculum template
+        self.template_1_path = os.path.join(self.templates_path, "Curriculum.docx")
+        # Initialize database 
+        self.db_path = os.path.join(self.working_folder, "applications")
+        self.output_path = os.path.join(self.working_folder, "Output CVs")
+        os.makedirs(self.output_path, exist_ok=True)
+        # Path to the applications database
+
+        if not os.path.exists(self.db_path):
+            print(f"{Fore.YELLOW}⚠️ No se encontró el archivo applications.db en {self.working_folder}.{Style.RESET_ALL}")
+            return
+
+        df = pd.read_sql_query("SELECT * FROM applications", f"sqlite:///{self.db_path}")
+
+        print(f"{Fore.CYAN}📄 Generando currículums...{Style.RESET_ALL}")
+        for _, row in df.iterrows():
+            job = str(row.get("JOB", "Unknown"))
+            try:
+                doc = Document(self.template_1_path)
+                for p in doc.paragraphs:
+                    for key in ["JOB", "TRIPLETEN", "MBA", "DIPLOMADO", "RETAIL", "ESEOTRES", "STATUS"]:
+                        if f"{{{key}}}" in p.text:
+                            inline = p.runs
+                            for i in range(len(inline)):
+                                if f"{{{key}}}" in inline[i].text:
+                                    inline[i].text = inline[i].text.replace(f"{{{key}}}", str(row.get(key, "")))
+                output_file = os.path.join(self.output_path, f"Cuaxospa_{job}.docx")
+                doc.save(output_file)
+                print(f"{Fore.GREEN}✅ Curriculum generado: {output_file}{Style.RESET_ALL}")
+            except Exception as e:
+                print(f"{Fore.RED}❌ Error generando {job}: {e}{Style.RESET_ALL}")
+        
 
     # Initialize the main components
     def __init__(self):
@@ -18,7 +54,7 @@ class CARRIER_MANAGEMENT:
         self.data_yaml = YAMLCREATOR(self.working_folder).data
         # Initialize Sprint 1.1: Get product list
         self.chrome_helper = CHROME_HELPER()
-
+    # Get the root path
     def get_root_path(self):
         # Get the directory where main.py lives (repo folder)
         repo_path = os.path.dirname(os.path.abspath(__file__))
