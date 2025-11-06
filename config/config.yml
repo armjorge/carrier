@@ -1,0 +1,11 @@
+db_structure:
+  schema_name: career_accelerator
+  table_company_types: |
+    type_id SERIAL,    
+    type_business TEXT NOT NULL PRIMARY KEY
+
+  table_companies: |
+    company_id SERIAL PRIMARY KEY,
+    company_name TEXT NOT NULL,
+    company_type TEXT REFERENCES career_accelerator.company_types(type_business),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
