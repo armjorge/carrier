@@ -1,11 +1,31 @@
 db_structure:
   schema_name: career_accelerator
+
   table_company_types: |
-    type_id SERIAL,    
-    type_business TEXT NOT NULL PRIMARY KEY
+    type_id SERIAL PRIMARY KEY,
+    type_business TEXT UNIQUE NOT NULL
 
   table_companies: |
     company_id SERIAL PRIMARY KEY,
-    company_name TEXT NOT NULL,
-    company_type TEXT REFERENCES career_accelerator.company_types(type_business),
+    company_name TEXT UNIQUE NOT NULL,
+    company_type TEXT NOT NULL REFERENCES career_accelerator.company_types(type_business),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+  table_applications: |
+    application_id SERIAL PRIMARY KEY,
+    job TEXT NOT NULL,
+    education1 TEXT NOT NULL,
+    education2 TEXT NOT NULL,
+    education3 TEXT NOT NULL,
+    diplomado TEXT NOT NULL,
+    experience1 TEXT NOT NULL,
+    experience2 TEXT NOT NULL,
+    experience3 TEXT NOT NULL,
+    skills TEXT NOT NULL,
+    interests TEXT NOT NULL,
+    lang TEXT CHECK (lang IN ('English', 'Spanish', 'French')) NOT NULL,
+    status TEXT CHECK (status IN ('applied', 'interviewing', 'offered', 'rejected')) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    company_name TEXT NOT NULL REFERENCES career_accelerator.companies(company_name),
+    company_type TEXT NOT NULL REFERENCES career_accelerator.company_types(type_business),
+    UNIQUE (company_name, company_type)

@@ -11,3 +11,7 @@ CREATE TABLE IF NOT EXISTS {schema_name}.companies (
     {table_companies}
 );
 
+-- Create applications table
+CREATE TABLE IF NOT EXISTS {schema_name}.applications (
+    {table_applications}
+);

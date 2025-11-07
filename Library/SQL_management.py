@@ -30,8 +30,8 @@ class CSV_TO_SQL:
         # 2️⃣ Intentar leer tabla de cuentas
         try:
             
-            self.companies = pd.read_sql(query, connexion)
-            print(f"✅ Loaded companies: {len(self.companies)} registros.")
+            self.df_companies = pd.read_sql(query, connexion)
+            print(f"✅ Loaded companies: {len(self.df_companies)} registros.")
 
         except Exception as e:
             error_msg = str(e)
@@ -45,7 +45,7 @@ class CSV_TO_SQL:
 
                 # Reintento
                 try:
-                    self.companies = pd.read_sql(query, connexion)
+                    self.df_companies = pd.read_sql(query, connexion)
                     print(f"✅ Loaded companies after creation: {len(self.companies)} registros.")
                 except Exception as e2:
                     print(f"❌ Error after trying to create schema/tables: {e2}")
@@ -60,8 +60,8 @@ class CSV_TO_SQL:
 
                 # Reintento
                 try:
-                    self.companies = pd.read_sql(query, connexion)
-                    print(f"✅ Loaded companies after creation: {len(self.companies)} registros.")
+                    self.df_companies = pd.read_sql(query, connexion)
+                    print(f"✅ Loaded companies after creation: {len(self.df_companies)} registros.")
                 except Exception as e2:
                     print(f"❌ Error after trying to create schema/tables: {e2}")
                     return False
@@ -70,8 +70,8 @@ class CSV_TO_SQL:
                 return False
 
         # 3️⃣ Validar contenido de cuentas
-        if self.companies.empty:
-            print("⚠️ No hay registros en 'carrier_accelerator.companies'. Captura empresas antes de comenzar.")
+        if self.df_companies.empty:
+            print("⚠️ No hay registros en 'self.df_companies'. Captura empresas antes de comenzar.")
             return False
 
     def sql_conexion(self, sql_url):

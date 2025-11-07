@@ -90,7 +90,7 @@ class INITIALIZE:
                     stmt = stmt.replace(f"{{{key}}}", value)
                 rendered_statements.append(stmt)
             statements = rendered_statements
-            print(f"🛠️ Executing {len(statements)} statements from 00_create_base.sql ...")
+            print(f"🛠️ Executing {len(statements)} statements from {os.path.basename(sql_path)} ...")
 
 
             for i, stmt in enumerate(statements, 1):
