@@ -21,12 +21,17 @@ El resultado: Pierdes tiempo en tareas administrativas en lugar de enfocarte en 
 
 ### ¿Cómo funciona?
 
-1. **Registras una vez** tu información base: educación, experiencias, skills
-2. **Creas aplicaciones** vinculadas a empresas y roles específicos
-3. **Generas CVs personalizados** automáticamente en el idioma que necesites
-4. **Haces seguimiento** del estado (aplicado, entrevista, oferta, rechazado)
+1. **Inicializas** el sistema (primera vez): se crea automáticamente el schema en PostgreSQL
+2. **Poblas datos** via una **interfaz web Streamlit** que te guía paso a paso:
+   - Defines tipos de empresa (Consultoría, Servicios Financieros, Tech, etc.)
+   - Registras empresas objetivo con su clasificación
+   - Capturas aplicaciones con toda tu información profesional personalizada para cada rol
+3. **Generas CVs** automáticamente en el idioma que necesites (English, Spanish, French)
+4. **Mantienes trazabilidad** del estado de cada aplicación (aplicado, entrevista, oferta, rechazado)
 
-El sistema usa **templates de Word con placeholders inteligentes** que se alimentan de una base de datos PostgreSQL, permitiéndote modificar tu narrativa profesional sin tocar el diseño del documento.
+**Sin escribir una sola línea de SQL**. La interfaz web elimina la fricción de generar inserts manuales, permitiéndote enfocarte en la narrativa estratégica de tu carrera.
+
+El sistema usa **templates de Word con placeholders inteligentes** (e.g., `{job}`, `{skills}`, `{experience1}`) que se alimentan automáticamente de PostgreSQL.
 
 ---
 
@@ -67,9 +72,12 @@ python carrier_management.py
 ```
 
 El menú interactivo te permite:
-1. **Inicializar la base de datos** (primera vez)
-2. **Capturar aplicaciones** via interfaz Streamlit
-3. **Generar CVs personalizados** en Word
+1. **Inicializar la base de datos** (primera vez) - Crea el schema PostgreSQL automáticamente
+2. **Poblar datos** - Abre una interfaz web Streamlit donde capturas:
+   - Company Types (tipos de empresa)
+   - Companies (empresas objetivo)
+   - Applications (aplicaciones con toda tu info profesional)
+3. **Generar CVs personalizados** en Word con un click
 
 ---
 
@@ -91,12 +99,15 @@ career_manager/
 ```
 
 ### Base de Datos
-- `company_types`: Tipos de empresa (consultora, startup, corporativo)
-- `companies`: Empresas objetivo con clasificación
-- `applications`: Aplicaciones con info completa del CV + estado
+Estructura relacional en PostgreSQL:
+- `company_types`: Tipos de empresa (consultoría, startup, corporativo, finanzas, tech)
+- `companies`: Empresas objetivo vinculadas a su tipo
+- `applications`: Aplicaciones con información completa del CV + tracking de estado
+
+**Ventaja clave**: Se pobla mediante una **interfaz web Streamlit** intuitiva que muestra las 3 tablas con formularios guiados. Esto elimina completamente la necesidad de escribir INSERTs SQL a mano, acelerando la captura de datos y reduciendo errores.
 
 ### Generación de CVs
-Los templates de Word usan placeholders tipo `{job}`, `{skills}`, `{experience1}` que se reemplazan dinámicamente con datos de PostgreSQL.
+Los templates de Word usan placeholders tipo `{job}`, `{skills}`, `{experience1}` que se reemplazan dinámicamente con datos de PostgreSQL. Cada aplicación puede tener contenido diferente según el match con el rol objetivo.
 
 ---
 
