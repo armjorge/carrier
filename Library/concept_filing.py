@@ -317,26 +317,34 @@ class CONCEPT_FILING:
                 if submitted:
                     try:
                         with conn.cursor() as cur:
+                            # 1️⃣ Intentar insertar si no existe
                             cur.execute(f'''
                                 INSERT INTO "{schema}".cover_letters
                                 (job, lang, company_name, header, address, date, body, "end", sign)
                                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                                ON CONFLICT (job, lang, company_name)
-                                DO UPDATE SET
-                                    header = EXCLUDED.header,
-                                    address = EXCLUDED.address,
-                                    date = EXCLUDED.date,
-                                    body = EXCLUDED.body,
-                                    "end" = EXCLUDED."end",
-                                    sign = EXCLUDED.sign;
+                                ON CONFLICT DO NOTHING;
                             ''', (
                                 job_selected, lang_selected, company_selected,
                                 header, address, date_str if date_str else None, body, end_text, sign
                             ))
+
+                            # 2️⃣ Actualizar siempre (si ya existía, se actualiza)
+                            cur.execute(f'''
+                                UPDATE "{schema}".cover_letters
+                                SET header = %s, address = %s, date = %s, body = %s, "end" = %s, sign = %s
+                                WHERE job = %s AND lang = %s AND company_name = %s;
+                            ''', (
+                                header, address, date_str if date_str else None, body, end_text, sign,
+                                job_selected, lang_selected, company_selected
+                            ))
+
                             conn.commit()
+
                         st.success("✅ Carta guardada correctamente.")
+
                     except Exception as e:
                         st.error(f"❌ Error al guardar la carta: {e}")
+
             def sql_conexion(self, sql_url):
                 try:
                     engine = create_engine(sql_url)

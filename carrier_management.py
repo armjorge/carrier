@@ -45,7 +45,25 @@ class CARRIER_MANAGEMENT:
             
     def __init__(self):
         self.folder_root = self.get_root_path()
-        self.working_folder = os.path.join(self.folder_root, "Carrier management")  
+        env_path = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+        env_file = os.path.join(env_path, '.env')
+        folder_name = "MAIN_PATH"
+        db_key = "DB_URL"
+        
+        self.working_folder = "."
+        pg_dict = {}
+
+        if os.path.exists(env_file):
+            load_dotenv(dotenv_path=env_file)
+            self.working_folder = os.getenv(folder_name)
+            pg_dict = {"DB_URL": os.getenv(db_key)} 
+
+        yaml_path = os.path.join(env_path, 'config', 'config.yml')
+        with open(yaml_path, 'r') as file:
+            data_access = yaml.safe_load(file)
+            if data_access is None:
+                data_access = {}
+            data_access.update(pg_dict)  # ⚠️ Esto solo funciona si data_access es una lista
         os.makedirs(self.working_folder, exist_ok=True)
         self.data_yaml = YAMLCREATOR(self.working_folder).data
         # Initialize Sprint 1.1: Get product list

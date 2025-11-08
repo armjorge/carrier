@@ -129,7 +129,7 @@ class CV_GENERATION():
         print("Ingresa la fecha que quieras que aparezca en la carta (formato DD/MM/AAAA): \n")
         str_date = input('DD/MM/AAAA: ')
         input_date = datetime.strptime(str_date, '%d/%m/%Y') if str_date else None
-
+        lang = selected_row['lang'].values[0]
         if input_date:
             day = input_date.day
             month_num = input_date.month
@@ -143,7 +143,7 @@ class CV_GENERATION():
                 'French': ["janvier", "février", "mars", "avril", "mai", "juin",
                         "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
             }
-            lang = df_cv['lang'].values[0]
+            
             if lang == 'English':
                 suffix = 'th'
                 if day in [1, 21, 31]:
