@@ -17,15 +17,43 @@ db_structure:
     education1 TEXT NOT NULL,
     education2 TEXT NOT NULL,
     education3 TEXT NOT NULL,
-    diplomado TEXT NOT NULL,
     experience1 TEXT NOT NULL,
     experience2 TEXT NOT NULL,
     experience3 TEXT NOT NULL,
     skills TEXT NOT NULL,
     interests TEXT NOT NULL,
-    lang TEXT CHECK (lang IN ('English', 'Spanish', 'French')) NOT NULL,
+    lang TEXT NOT NULL,
     status TEXT CHECK (status IN ('applied', 'interviewing', 'offered', 'rejected')) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     company_name TEXT NOT NULL REFERENCES career_accelerator.companies(company_name),
     company_type TEXT NOT NULL REFERENCES career_accelerator.company_types(type_business),
-    UNIQUE (company_name, company_type)
+    UNIQUE (company_name, company_type),
+    UNIQUE (job, lang, company_name),
+    FOREIGN KEY (lang)
+      REFERENCES languages(lang)
+      ON UPDATE CASCADE
+      ON DELETE RESTRICT
+
+
+  table_cover_letters: |
+    cover_id SERIAL PRIMARY KEY,
+    job TEXT NOT NULL,
+    lang TEXT NOT NULL,
+    company_name TEXT NOT NULL,
+    header TEXT,
+    address TEXT,
+    date DATE,
+    body TEXT,
+    "end" TEXT,
+    sign TEXT,
+    CONSTRAINT fk_cover_letters_applications
+        FOREIGN KEY (job, lang, company_name)
+        REFERENCES career_accelerator.applications (job, lang, company_name)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+
+  table_templates: |
+    job
+    lang
+  table_languages: |
+    lang TEXT PRIMARY KEY
