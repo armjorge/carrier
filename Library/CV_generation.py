@@ -6,7 +6,7 @@ import pandas as pd
 from docx import Document
 import yaml
 from sqlalchemy import create_engine
-
+import subprocess
 
 
 class CV_GENERATION():
@@ -15,48 +15,62 @@ class CV_GENERATION():
         print(f"{Fore.BLUE}CARRIER MANAGEMENT{Style.RESET_ALL}")
         self.templates_path = os.path.join(self.working_folder, "CV Templates")
         os.makedirs(self.templates_path, exist_ok=True)
-        # Intialize curriculum template
-        self.template_1_path = os.path.join(self.templates_path, "Curriculum.docx")
-        # request info
-        query = "SELECT * FROM career_accelerator.applications" # Query inicial
-        # 1️⃣ Conectar
+
+        query = "SELECT * FROM career_accelerator.applications"
         connexion = self.sql_conexion(self.data_access['DB_URL']).connect()
         if connexion is None:
             print("❌ No se pudo establecer conexión con SQL Server.")
             return False
 
-        # 2️⃣ Intentar leer tabla de cuentas
         try:
-
             self.df_applications = pd.read_sql(query, connexion)
+            self.df_cover_letters = pd.read_sql("SELECT * FROM career_accelerator.cover_letters", connexion)
+            connexion.close()
             print(f"✅ Loaded applications: {len(self.df_applications)} registros.")
         except Exception as e:
-            error_msg = str(e)
             print(f"❌ Error ejecutando la consulta SQL: {e}")
-        # Debug: imprimir todos los párrafos del template y guardarlos en un archivo
-        template_path = self.template_1_path
+            return
 
-        if os.path.exists(template_path):
-            doc = Document(template_path)
-            debug_file = os.path.join(self.output_path, "template_debug.txt")
+        df_cv, df_cl = self.get_desired_row(self.df_applications, self.df_cover_letters)
+        lang = df_cv['lang'].values[0]
+        job = df_cv['job'].values[0]
+        cv_path = os.path.join(self.templates_path, f"Curriculum_{lang}.docx")
+        cover_letter_path = os.path.join(self.templates_path, f"Cover_letter_{lang}.docx")
+        output_cv = os.path.join(self.output_path, f"{job}_CV.docx")
+        output_cl = os.path.join(self.output_path, f"{job}_CL.docx")
+        if not os.path.exists(cv_path):
+            print(f"{Fore.RED}❌ No se encontró el template en: {cv_path}{Style.RESET_ALL}")
+            return
 
-            print(f"{Fore.YELLOW}🔍 Leyendo estructura del template Word...{Style.RESET_ALL}")
-            with open(debug_file, "w", encoding="utf-8") as f:
-                for i, p in enumerate(doc.paragraphs):
-                    text_repr = repr(p.text)
-                    print(f"[{i}] → {text_repr}")
-                    f.write(f"[{i}] → {text_repr}\n")
+        if not os.path.exists(cover_letter_path):
+            print(f"{Fore.RED}❌ No se encontró el template en: {cover_letter_path}{Style.RESET_ALL}")
+            return
+        
+        # Selecciona template según modo
+        print(f"{Fore.CYAN}📄 Generando currículum...{Style.RESET_ALL}")
 
-            print(f"{Fore.GREEN}✅ Estructura del template guardada en: {debug_file}{Style.RESET_ALL}")
+
+        self.populate_document(cv_path, df_cv, output_cv)
+        self.open_word_path(output_cv)
+        print(f"{Fore.CYAN}📄 Generando carta...{Style.RESET_ALL}")
+        
+        self.populate_document(cover_letter_path, df_cl, output_cl)
+        self.open_word_path(output_cl)
+        
+    def open_word_path(self, path):
+        """Open a file in the default application, cross-platform."""
+        if os.name == 'nt':
+            os.startfile(path)
+        elif os.uname().sysname == 'Darwin':
+            subprocess.call(['open', path])
         else:
-            print(f"{Fore.RED}❌ No se encontró el template en: {template_path}{Style.RESET_ALL}")
-        df = self.df_applications
-        print(f"{Fore.CYAN}📄 Generando currículums...{Style.RESET_ALL}")
+            subprocess.call(['xdg-open', path])
 
+    def populate_document(self, template_doc, df, output_file):
         for _, row in df.iterrows():
             job = str(row.get("job", "Unknown"))
             try:
-                doc = Document(self.template_1_path)
+                doc = Document(template_doc)
 
                 # 🔹 Reemplazar placeholders en párrafos con soporte para saltos de línea y bullets
                 for p in doc.paragraphs:
@@ -81,14 +95,38 @@ class CV_GENERATION():
                                     body_element.remove(new_p_element)
                                     body_element.insert(index + 1, new_p_element)
                                     index += 1
-
-                output_file = os.path.join(self.output_path, f"Cuaxospa_{job}.docx")
                 doc.save(output_file)
                 print(f"{Fore.GREEN}✅ Curriculum generado: {output_file}{Style.RESET_ALL}")
 
             except Exception as e:
                 print(f"{Fore.RED}❌ Error generando {job}: {e}{Style.RESET_ALL}")
+         
+    def get_desired_row(self, df_cv, df_cl):
+        columns_pk = ['job', 'lang', 'company_name']
+        max_length = len(df_cv)
+        for index, row in df_cv.iterrows():
+            print(f"{index} - {row[columns_pk]}")
+        while True:
+            selected_indices = input("Ingrese la fila que requieres para generar el cv")
+            try:
+                selected_index = int(selected_indices)
+                if 0 <= selected_index < max_length:
+                    break
+                else:
+                    print(f"Por favor, ingrese un número entre 0 y {max_length - 1}")
+            except ValueError:
+                print("Por favor, ingrese un número entero válido")
+        selected_row = df_cv.iloc[[selected_index]]
+        # 🔹 Filtrar df_cl donde job, lang y company_name coincidan
+        match_mask = (
+            (df_cl["job"] == selected_row["job"].values[0]) &
+            (df_cl["lang"] == selected_row["lang"].values[0]) &
+            (df_cl["company_name"] == selected_row["company_name"].values[0])
+        )
+        df_cl_match = df_cl.loc[match_mask]
 
+        return selected_row, df_cl
+    
 
     def sql_conexion(self, sql_url):
         try:
