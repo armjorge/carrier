@@ -169,7 +169,8 @@ class CV_GENERATION():
         # Agregar al DataFrame
         selected_row['date_issued'] = date_issued
         df_cl['date_issued'] = date_issued
-
+        selected_row = selected_row.fillna('').replace({'na': '', 'Null': '', 'None': '', 'NULL': ''})
+        df_cl = df_cl.fillna('').replace({'na': '', 'Null': '', 'None': '', 'NULL': ''})
         return selected_row, df_cl
     
 

@@ -156,52 +156,59 @@ class CONCEPT_FILING:
 
             st.dataframe(df, use_container_width=True)
 
-            st.markdown("### ➕ Agregar nueva Application")
+            st.markdown("### ➕ Agregar o Editar Application")
+
+            # === Seleccionar registro existente (opcional) ===
+            existing_jobs = df['job'].tolist() if not df.empty else []
+            selected_existing_job = st.selectbox("Selecciona una aplicación existente (opcional para editar):", [""] + existing_jobs)
+
+            # Prellenar si se seleccionó uno existente
+            if selected_existing_job:
+                selected_row = df[df['job'] == selected_existing_job].iloc[0]
+                default_values = selected_row.to_dict()
+            else:
+                default_values = {}
 
             # === Formulario ===
-            with st.form("add_application_form", clear_on_submit=True):
+            with st.form("application_form", clear_on_submit=False):
                 st.subheader("🧠 Información General")
-
-                new_job = st.text_input("Job position")
+                new_job = st.text_input("Job position", value=default_values.get("job", ""))
 
                 # === Educación ===
+                # === Educación ===
                 st.markdown("#### 🎓 Education")
-                col1, col2, col3 = st.columns(3)
+                col1, col2 = st.columns(2)  # ← dos columnas amplias
                 with col1:
-                    new_education1 = st.text_area("Education 1", height=100)
+                    new_education1 = st.text_area("Education 1", value=default_values.get("education1", ""), height=250)
+                    new_education2 = st.text_area("Education 2", value=default_values.get("education2", ""), height=250)
                 with col2:
-                    new_education2 = st.text_area("Education 2", height=100)
-                with col3:
-                    new_education3 = st.text_area("Education 3", height=100)
+                    new_education3 = st.text_area("Education 3", value=default_values.get("education3", ""), height=250)
 
                 # === Experiencia ===
                 st.markdown("#### 💼 Experience")
-                col4, col5, col6 = st.columns(3)
+                col3, col4 = st.columns(2)
+                with col3:
+                    new_experience1 = st.text_area("Experience 1", value=default_values.get("experience1", ""), height=250)
+                    new_experience2 = st.text_area("Experience 2", value=default_values.get("experience2", ""), height=250)
                 with col4:
-                    new_experience1 = st.text_area("Experience 1", height=100)
-                with col5:
-                    new_experience2 = st.text_area("Experience 2", height=100)
-                with col6:
-                    new_experience3 = st.text_area("Experience 3", height=100)
-
+                    new_experience3 = st.text_area("Experience 3", value=default_values.get("experience3", ""), height=250)
                 # === Skills & Interests ===
                 st.markdown("#### 🧩 Skills & Interests")
-                new_skills = st.text_area("Skills", height=120)
-                new_interests = st.text_area("Interests", height=120)
+                new_skills = st.text_area("Skills", value=default_values.get("skills", ""), height=120)
+                new_interests = st.text_area("Interests", value=default_values.get("interests", ""), height=120)
 
                 # === Idioma y Estado ===
                 st.markdown("#### 🌍 Language & Status")
                 col7, col8 = st.columns(2)
                 with col7:
                     lang_options = ["English", "Spanish", "French"]
-                    new_lang = st.selectbox("Language", options=lang_options)
+                    new_lang = st.selectbox("Language", options=lang_options, index=lang_options.index(default_values.get("lang", "English")) if default_values.get("lang") in lang_options else 0)
                 with col8:
                     status_options = ["applied", "interviewing", "offered", "rejected"]
-                    selected_status = st.selectbox("Status", options=status_options)
+                    selected_status = st.selectbox("Status", options=status_options, index=status_options.index(default_values.get("status", "applied")) if default_values.get("status") in status_options else 0)
 
                 # === Empresa y Tipo ===
                 st.markdown("#### 🏢 Company Information")
-
                 try:
                     companies_df = pd.read_sql(
                         f'SELECT company_name, company_type FROM "{schema}".companies ORDER BY company_name;',
@@ -213,50 +220,69 @@ class CONCEPT_FILING:
 
                 if company_options:
                     company_names = [c['company_name'] for c in company_options]
-                    selected_company_name = st.selectbox("Company Name", options=company_names)
-
-                    # Obtener automáticamente el company_type correspondiente
+                    selected_company_name = st.selectbox("Company Name", options=company_names, index=company_names.index(default_values.get("company_name", company_names[0])) if default_values.get("company_name") in company_names else 0)
                     selected_company_type = next(
                         (c['company_type'] for c in company_options if c['company_name'] == selected_company_name),
-                        None
+                        default_values.get("company_type", None)
                     )
                     st.info(f"**Company Type:** {selected_company_type}")
                 else:
-                    selected_company_name = st.text_input("Company Name (if none available)")
-                    selected_company_type = st.text_input("Company Type (must exist in company_types.type_business)")
+                    selected_company_name = st.text_input("Company Name (if none available)", value=default_values.get("company_name", ""))
+                    selected_company_type = st.text_input("Company Type", value=default_values.get("company_type", ""))
 
                 # === Botón de envío ===
-                submitted = st.form_submit_button("💾 Agregar Application")
+                submitted = st.form_submit_button("💾 Guardar Application")
 
                 if submitted:
                     if new_job and selected_company_name and selected_company_type and selected_status:
                         try:
                             with conn.cursor() as cur:
+                                # Intentar actualizar primero
                                 cur.execute(
                                     f'''
-                                    INSERT INTO "{schema}".applications 
-                                    (job, education1, education2, education3,
-                                    experience1, experience2, experience3,
-                                    skills, interests, lang, status,
-                                    company_name, company_type)
-                                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                                    ON CONFLICT DO NOTHING;
+                                    UPDATE "{schema}".applications
+                                    SET education1 = %s, education2 = %s, education3 = %s,
+                                        experience1 = %s, experience2 = %s, experience3 = %s,
+                                        skills = %s, interests = %s, lang = %s, status = %s,
+                                        company_name = %s, company_type = %s
+                                    WHERE job = %s;
                                     ''',
                                     (
-                                        new_job,
                                         new_education1, new_education2, new_education3,
                                         new_experience1, new_experience2, new_experience3,
                                         new_skills, new_interests,
                                         new_lang, selected_status,
-                                        selected_company_name, selected_company_type
+                                        selected_company_name, selected_company_type,
+                                        new_job
                                     )
                                 )
+                                if cur.rowcount == 0:
+                                    # Si no existe, insertar
+                                    cur.execute(
+                                        f'''
+                                        INSERT INTO "{schema}".applications 
+                                        (job, education1, education2, education3,
+                                        experience1, experience2, experience3,
+                                        skills, interests, lang, status,
+                                        company_name, company_type)
+                                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                                        ''',
+                                        (
+                                            new_job,
+                                            new_education1, new_education2, new_education3,
+                                            new_experience1, new_experience2, new_experience3,
+                                            new_skills, new_interests,
+                                            new_lang, selected_status,
+                                            selected_company_name, selected_company_type
+                                        )
+                                    )
                                 conn.commit()
-                            st.success("✅ Application agregada correctamente.")
+                            st.success("✅ Application guardada o actualizada correctamente.")
                         except Exception as e:
-                            st.error(f"❌ Error al agregar Application: {e}")
+                            st.error(f"❌ Error al guardar la Application: {e}")
                     else:
                         st.warning("⚠️ Los campos Job, Company Name y Status son obligatorios.")
+            
         elif vista == "Cover Letters":
             st.title("📄 Cover Letters")
 
