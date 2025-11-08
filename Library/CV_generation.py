@@ -7,6 +7,7 @@ from docx import Document
 import yaml
 from sqlalchemy import create_engine
 import subprocess
+from datetime import datetime
 
 
 class CV_GENERATION():
@@ -124,6 +125,50 @@ class CV_GENERATION():
             (df_cl["company_name"] == selected_row["company_name"].values[0])
         )
         df_cl_match = df_cl.loc[match_mask]
+
+        print("Ingresa la fecha que quieras que aparezca en la carta (formato DD/MM/AAAA): \n")
+        str_date = input('DD/MM/AAAA: ')
+        input_date = datetime.strptime(str_date, '%d/%m/%Y') if str_date else None
+
+        if input_date:
+            day = input_date.day
+            month_num = input_date.month
+            year = input_date.year
+
+            months = {
+                'English': ["January", "February", "March", "April", "May", "June",
+                            "July", "August", "September", "October", "November", "December"],
+                'Spanish': ["enero", "febrero", "marzo", "abril", "mayo", "junio",
+                            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
+                'French': ["janvier", "février", "mars", "avril", "mai", "juin",
+                        "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
+            }
+            lang = df_cv['lang'].values[0]
+            if lang == 'English':
+                suffix = 'th'
+                if day in [1, 21, 31]:
+                    suffix = 'st'
+                elif day in [2, 22]:
+                    suffix = 'nd'
+                elif day in [3, 23]:
+                    suffix = 'rd'
+                date_issued = f"Mexico City, {months['English'][month_num-1]} {day}{suffix}, {year}"
+
+            elif lang == 'Spanish':
+                date_issued = f"Ciudad de México, {day} de {months['Spanish'][month_num-1].capitalize()} de {year}"
+
+            elif lang == 'French':
+                date_issued = f"Mexico, le {day} {months['French'][month_num-1].capitalize()} {year}"
+
+            else:
+                date_issued = input_date.strftime('%d/%m/%Y')
+        else:
+            date_issued = datetime.today().strftime('%d/%m/%Y')
+
+
+        # Agregar al DataFrame
+        selected_row['date_issued'] = date_issued
+        df_cl['date_issued'] = date_issued
 
         return selected_row, df_cl
     
